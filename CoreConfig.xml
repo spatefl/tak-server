@@ -13,6 +13,19 @@
     </network>
     <auth x509groups="true" x509addAnonymous="false">
         <File location="UserAuthenticationFile.xml"/>
+        <oauth groupsClaim="groups" usernameClaim="preferred_username" scopeClaim="scope" webtakScope="webtak">
+            <authServer name="keycloak-dev"
+                        issuer="http://localhost:8081/realms/sc3"
+                        clientId="tak-server"
+                        secret="CHANGE_ME_FROM_KEYCLOAK"
+                        redirectUri="https://localhost:8443/login/redirect"
+                        scope="openid profile email"
+                        authEndpoint="http://localhost:8081/realms/sc3/protocol/openid-connect/auth"
+                        tokenEndpoint="http://localhost:8081/realms/sc3/protocol/openid-connect/token"
+                        accessTokenName="access_token"
+                        refreshTokenName="refresh_token"
+                        trustAllCerts="true"/>
+        </oauth>
     </auth>
     <submission ignoreStaleMessages="false" validateXml="false"/>
     <subscription reloadPersistent="false"/>

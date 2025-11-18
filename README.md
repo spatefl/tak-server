@@ -138,6 +138,26 @@ TAK server needs the following port numbers to operate. Services already using t
 
 If you are going to expose these ports be careful. Not all of them run secure protocols. For peace of mind, and for working through firewalls and NAT routers run this on a VPN like OpenVPN or NordVPN.
 
+## Keycloak / OIDC (Auth Code Flow)
+
+This bundle includes a dev Keycloak compose file (`compose-keycloak.dev.yml`) that runs Keycloak on `http://localhost:8081` with an admin user of `admin/admin`. For TAK’s browser login, configure it as an external OIDC authorization server using the **confidential** (client-authenticated) authorization code flow.
+
+1) In Keycloak (SC3 realm), create a client `tak-server` with:
+   - Client authentication: ON (confidential client)
+   - Standard flow: ON; Direct access grants: OFF
+   - Valid redirect URIs: `https://<tak-host>/login/redirect` (add dev and prod hostnames)
+   - Web origins: leave empty unless a browser app calls Keycloak directly
+   - Save and copy the client secret
+
+2) Update `tak/CoreConfig.xml` under `<auth>` with the `<oauth>` block (example values already added):
+   - `issuer`, `authEndpoint`, `tokenEndpoint` -> your Keycloak realm (`http://localhost:8081/realms/sc3/...` for dev)
+   - `redirectUri` -> `https://<tak-host>/login/redirect`
+   - `clientId`/`secret` -> from the Keycloak client (replace `CHANGE_ME_FROM_KEYCLOAK`)
+   - `trustAllCerts="true"` is only for local/self-signed; set `false` and use HTTPS + CA certs in prod
+   - Claims: `groupsClaim="groups"`, `usernameClaim="preferred_username"`, `scopeClaim="scope"`, optional `webtakScope` if you require a scope for WebTAK access
+
+3) Restart TAK after changing `CoreConfig.xml` so the new OIDC settings load.
+
 ### Successful Installation
 
 If your TAK Server was able to successfully be installed then you should see in your console a similar message:
