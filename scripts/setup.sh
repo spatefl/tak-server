@@ -10,13 +10,18 @@ color success 92m
 color warning 93m 
 color danger 91m 
 
-DOCKER_COMPOSE="docker-compose"
-
-if ! command -v docker-compose
-then
-	DOCKER_COMPOSE="docker compose"
-	echo "Docker compose command set to new style $DOCKER_COMPOSE"
+# Docker Compose detection (prefer plugin, respect DOCKER_COMPOSE override)
+if [ -z "$DOCKER_COMPOSE" ]; then
+	if docker compose version >/dev/null 2>&1; then
+		DOCKER_COMPOSE="docker compose"
+	elif command -v docker-compose >/dev/null 2>&1; then
+		DOCKER_COMPOSE="docker-compose"
+	else
+		printf "\nUnable to find Docker Compose. Install the docker compose plugin or docker-compose v1.\n"
+		exit 1
+	fi
 fi
+echo "Docker compose command set to: $DOCKER_COMPOSE"
 
 
 printf $success "\nTAK server setup script sponsored by CloudRF.com - \"The API for RF\"\n"
@@ -294,6 +299,17 @@ export STATE=$state
 export CITY=$city
 export ORGANIZATIONAL_UNIT=$orgunit
 
+
+# Ensure we can write a new .env (previous sudo runs may have left it owned by root)
+if [ -e ".env" ] && [ ! -w ".env" ]; then
+	printf $warning "\nExisting .env not writable. Attempting to chown to $USER...\n"
+	if command -v sudo >/dev/null 2>&1; then
+		sudo chown $USER:$USER .env || { printf $danger "\nFailed to chown .env. Please remove or chown .env manually and rerun.\n"; exit 1; }
+	else
+		printf $danger "\nCannot write .env. Remove or chown .env to $USER and rerun.\n"
+		exit 1
+	fi
+fi
 
 # Writes variables to a .env file for docker-compose
 cat << EOF > .env

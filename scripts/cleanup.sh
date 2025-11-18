@@ -1,12 +1,16 @@
 #!/bin/bash
 
-DOCKER_COMPOSE="docker-compose"
-
-if ! command -v docker-compose
-then
-        DOCKER_COMPOSE="docker compose"
-        echo "Docker compose command set to new style $DOCKER_COMPOSE"
+if [ -z "$DOCKER_COMPOSE" ]; then
+	if docker compose version >/dev/null 2>&1; then
+		DOCKER_COMPOSE="docker compose"
+	elif command -v docker-compose >/dev/null 2>&1; then
+		DOCKER_COMPOSE="docker-compose"
+	else
+		echo "Unable to find Docker Compose. Install it and rerun cleanup."
+		exit 1
+	fi
 fi
+echo "Docker compose command set to: $DOCKER_COMPOSE"
 
 $DOCKER_COMPOSE down
 docker volume rm --force tak-server_db_data
